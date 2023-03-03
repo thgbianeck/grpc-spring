@@ -5,14 +5,32 @@ option java_multiple_files = true;
 
 package br.com.bieniek;
 
-service HelloService {
-    rpc Hello (HelloRequest) returns (HelloResponse) {}
+service ProductService {
+    rpc Create(ProductRequest) returns (ProductResponse) {}
+    rpc FindById(RequestById) returns (ProductResponse) {}
+    rpc Delete(RequestById) returns (ProductResponse) {}
+    rpc FindAll(EmptyRequest) returns (ProductResponseList) {}
 }
 
-message HelloRequest {
-    string message = 1;
+message RequestById {
+    int64 id = 1;
 }
 
-message HelloResponse {
-    string message = 1;
+message EmptyRequest {}
+
+message ProductRequest {
+    string name = 1;
+    double price = 2;
+    int32 quantity = 3;
+}
+
+message ProductResponse {
+    int64 id = 1;
+    string name = 2;
+    double price = 3;
+    int32 quantity = 4;
+}
+
+message ProductResponseList {
+    repeated ProductResponse products = 1;
 }

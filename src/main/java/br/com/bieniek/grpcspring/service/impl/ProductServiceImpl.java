@@ -3,6 +3,8 @@ package br.com.bieniek.grpcspring.service.impl;
 import br.com.bieniek.grpcspring.domain.Product;
 import br.com.bieniek.grpcspring.dto.ProductInputDTO;
 import br.com.bieniek.grpcspring.dto.ProductOutputDTO;
+import br.com.bieniek.grpcspring.exception.ProductAlreadyExistsException;
+import br.com.bieniek.grpcspring.exception.ProductNotFoundException;
 import br.com.bieniek.grpcspring.repository.ProductRepository;
 import br.com.bieniek.grpcspring.service.IProductService;
 import br.com.bieniek.grpcspring.util.ProductConverterUtil;
@@ -21,6 +23,7 @@ public class ProductServiceImpl implements IProductService {
 
     @Override
     public ProductOutputDTO create(ProductInputDTO inputDTO) {
+        checkDuplicity(inputDTO.getName());
         var product = productInputDtoToProduct(inputDTO);
         var productCreated = productRepository.save(product);
 
@@ -29,7 +32,9 @@ public class ProductServiceImpl implements IProductService {
 
     @Override
     public ProductOutputDTO findById(Long id) {
-        return null;
+        Product product = productRepository.findById(id)
+                .orElseThrow(() -> new ProductNotFoundException(id));
+        return ProductConverterUtil.productToProductOutputDTO(product);
     }
 
     @Override
@@ -40,5 +45,11 @@ public class ProductServiceImpl implements IProductService {
     @Override
     public List<ProductOutputDTO> findAll() {
         return null;
+    }
+
+    private void checkDuplicity(String name) {
+        productRepository.findByNameIgnoreCase(name).ifPresent(e -> {
+            throw new ProductAlreadyExistsException(name);
+        });
     }
 }

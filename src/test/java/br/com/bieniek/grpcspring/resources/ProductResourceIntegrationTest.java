@@ -2,7 +2,8 @@ package br.com.bieniek.grpcspring.resources;
 
 import br.com.bieniek.ProductRequest;
 import br.com.bieniek.ProductResponse;
-import br.com.bieniek.ProductServiceGrpc;
+import br.com.bieniek.RequestById;
+import br.com.bieniek.grpcspring.exception.ProductNotFoundException;
 import io.grpc.StatusRuntimeException;
 import net.devh.boot.grpc.client.inject.GrpcClient;
 import org.assertj.core.api.Assertions;
@@ -15,8 +16,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.TestPropertySource;
 
-import static br.com.bieniek.ProductServiceGrpc.*;
-import static org.assertj.core.api.Assertions.*;
+import static br.com.bieniek.ProductServiceGrpc.ProductServiceBlockingStub;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest
 @TestPropertySource("classpath:application-test.properties")
@@ -66,6 +67,35 @@ class ProductResourceIntegrationTest {
         Assertions.assertThatExceptionOfType(StatusRuntimeException.class)
                 .isThrownBy(() -> serviceBlockingStub.create(productRequest))
                 .withMessageContaining("ALREADY_EXISTS: Produto Product A já cadastrado no sistema");
+    }
+
+    @Test
+    @DisplayName("when findById is called with valid id, then return a product")
+    public void findByIdSuccessTest() {
+
+        RequestById requestById = RequestById.newBuilder()
+                .setId(1L)
+                .build();
+
+        ProductResponse productResponse = serviceBlockingStub.findById(requestById);
+
+        assertThat(productResponse.getId()).isEqualTo(requestById.getId());
+        assertThat(productResponse.getName()).isEqualTo("Product A");
+    }
+
+    @Test
+    @DisplayName("when findById is called with invalid id, then throw ProductNotFoundException")
+    public void findByIdExceptionTest() {
+
+        long id = 999L;
+
+        RequestById requestById = RequestById.newBuilder()
+                .setId(id)
+                .build();
+
+        Assertions.assertThatExceptionOfType(StatusRuntimeException.class)
+                .isThrownBy(() -> serviceBlockingStub.findById(requestById))
+                .withMessageContaining("NOT_FOUND: Produto com ID " + id + " não encontrado");
     }
 
 }

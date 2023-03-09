@@ -1,8 +1,6 @@
 package br.com.bieniek.grpcspring.resources;
 
-import br.com.bieniek.ProductRequest;
-import br.com.bieniek.ProductResponse;
-import br.com.bieniek.RequestById;
+import br.com.bieniek.*;
 import br.com.bieniek.grpcspring.exception.ProductNotFoundException;
 import io.grpc.StatusRuntimeException;
 import net.devh.boot.grpc.client.inject.GrpcClient;
@@ -18,6 +16,7 @@ import org.springframework.test.context.TestPropertySource;
 
 import static br.com.bieniek.ProductServiceGrpc.ProductServiceBlockingStub;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.AssertionsForClassTypes.tuple;
 
 @SpringBootTest
 @TestPropertySource("classpath:application-test.properties")
@@ -125,6 +124,28 @@ class ProductResourceIntegrationTest {
         Assertions.assertThatExceptionOfType(StatusRuntimeException.class)
                 .isThrownBy(() -> serviceBlockingStub.delete(requestById))
                 .withMessageContaining("NOT_FOUND: Produto com ID " + id + " não encontrado");
+    }
+
+    @Test
+    @DisplayName("when findAll is called, then return a list of products")
+    public void findAllSuccessTest() {
+
+        EmptyRequest request = EmptyRequest.newBuilder().build();
+
+        ProductResponseList responseList = serviceBlockingStub.findAll(request);
+
+        assertThat(responseList).isInstanceOf(ProductResponseList.class);
+        assertThat(responseList.getProductsList()).isNotEmpty();
+        assertThat(responseList.getProductsCount()).isEqualTo(2);
+
+        assertThat(responseList.getProductsList())
+                .extracting("id", "name", "price", "quantityInStock")
+                .contains(
+                        tuple(1L, "Product A", 10.99, 10),
+                        tuple(2L, "Product B", 10.99, 10)
+                );
+
+
     }
 
 }

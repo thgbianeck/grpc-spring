@@ -12,6 +12,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static br.com.bieniek.grpcspring.util.ProductConverterUtil.*;
 
@@ -39,12 +41,17 @@ public class ProductServiceImpl implements IProductService {
 
     @Override
     public void delete(Long id) {
-
+        Product product = productRepository.findById(id)
+                .orElseThrow(() -> new ProductNotFoundException(id));
+        productRepository.delete(product);
     }
 
     @Override
     public List<ProductOutputDTO> findAll() {
-        return null;
+        List<Product> products = productRepository.findAll();
+        return products.stream()
+                .map(ProductConverterUtil::productToProductOutputDTO)
+                .toList();
     }
 
     private void checkDuplicity(String name) {

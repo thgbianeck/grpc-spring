@@ -6,6 +6,7 @@ import br.com.bieniek.grpcspring.dto.ProductOutputDTO;
 import br.com.bieniek.grpcspring.exception.ProductAlreadyExistsException;
 import br.com.bieniek.grpcspring.exception.ProductNotFoundException;
 import br.com.bieniek.grpcspring.repository.ProductRepository;
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -13,8 +14,10 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.List;
 import java.util.Optional;
 
+import static org.assertj.core.api.Assertions.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.mockito.Mockito.any;
@@ -106,6 +109,53 @@ class ProductServiceImplTest {
 
         assertThatExceptionOfType(ProductNotFoundException.class)
                 .isThrownBy(() -> service.findById(id));
+    }
+
+    @Test
+    @DisplayName("When delete product is call with valid id should does not throw any exception")
+    void deleteSuccessTest() {
+        Long id = 1L;
+
+        Product product = Product.builder()
+                .id(id)
+                .name("product name")
+                .price(10.0)
+                .quantityInStock(10)
+                .build();
+
+        when(productRepository.findById(any())).thenReturn(Optional.of(product));
+
+        assertThatNoException().isThrownBy(() -> service.delete(id));
+
+    }
+
+    @Test
+    @DisplayName("When delete product is call with invalid id should throw ProductNotFoundException")
+    void deleteExceptionTest() {
+        Long id = 1L;
+
+        when(productRepository.findById(any())).thenReturn(Optional.empty());
+
+        assertThatExceptionOfType(ProductNotFoundException.class)
+                .isThrownBy(() -> service.delete(id));
+    }
+
+    @Test
+    @DisplayName("When findAll product is call should return a list of products")
+    void findAllTest() {
+        List<Product> products = List.of(Product.builder().id(1L).name("product name").price(10.0).quantityInStock(10).build(),
+                Product.builder().id(2L).name("other product name").price(10.0).quantityInStock(10).build());
+
+        when(productRepository.findAll()).thenReturn(products);
+
+        List<ProductOutputDTO> outputDTOs = service.findAll();
+
+        assertThat(outputDTOs)
+                .extracting("id", "name", "price", "quantityInStock")
+                .contains(
+                    tuple(1L, "product name", 10.0, 10),
+                    tuple(2L, "other product name", 10.0, 10)
+                );
     }
 
 }

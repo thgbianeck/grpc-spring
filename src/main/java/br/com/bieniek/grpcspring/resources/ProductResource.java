@@ -4,11 +4,12 @@ import br.com.bieniek.*;
 import br.com.bieniek.grpcspring.dto.ProductInputDTO;
 import br.com.bieniek.grpcspring.dto.ProductOutputDTO;
 import br.com.bieniek.grpcspring.service.IProductService;
-import io.grpc.Status;
-import io.grpc.StatusRuntimeException;
 import io.grpc.stub.StreamObserver;
 import lombok.RequiredArgsConstructor;
 import net.devh.boot.grpc.server.service.GrpcService;
+
+import java.util.List;
+import java.util.stream.Stream;
 
 @GrpcService
 @RequiredArgsConstructor
@@ -21,7 +22,7 @@ public class ProductResource extends ProductServiceGrpc.ProductServiceImplBase {
         ProductInputDTO inputDTO = ProductInputDTO.builder()
                 .name(request.getName())
                 .price(request.getPrice())
-                .quantityInStock(request.getQuantity())
+                .quantityInStock(request.getQuantityInStock())
                 .build();
 
         ProductOutputDTO outputDTO = this.productService.create(inputDTO);
@@ -30,7 +31,7 @@ public class ProductResource extends ProductServiceGrpc.ProductServiceImplBase {
                 .setId(outputDTO.getId())
                 .setName(outputDTO.getName())
                 .setPrice(outputDTO.getPrice())
-                .setQuantity(outputDTO.getQuantityInStock())
+                .setQuantityInStock(outputDTO.getQuantityInStock())
                 .build();
 
         responseObserver.onNext(response);
@@ -45,7 +46,7 @@ public class ProductResource extends ProductServiceGrpc.ProductServiceImplBase {
                 .setId(outputDTO.getId())
                 .setName(outputDTO.getName())
                 .setPrice(outputDTO.getPrice())
-                .setQuantity(outputDTO.getQuantityInStock())
+                .setQuantityInStock(outputDTO.getQuantityInStock())
                 .build();
 
         responseObserver.onNext(response);
@@ -53,12 +54,27 @@ public class ProductResource extends ProductServiceGrpc.ProductServiceImplBase {
     }
 
     @Override
-    public void delete(RequestById request, StreamObserver<ProductResponse> responseObserver) {
-        throw new StatusRuntimeException(Status.UNIMPLEMENTED);
+    public void delete(RequestById request, StreamObserver<EmptyResponse> responseObserver) {
+        productService.delete(request.getId());
+        responseObserver.onNext(EmptyResponse.newBuilder().build());
+        responseObserver.onCompleted();
     }
 
     @Override
     public void findAll(EmptyRequest request, StreamObserver<ProductResponseList> responseObserver) {
-        throw new StatusRuntimeException(Status.UNIMPLEMENTED);
+        List<ProductOutputDTO> outputDTOList = productService.findAll();
+        var productResponseList = outputDTOList.stream().map(product -> ProductResponse.newBuilder()
+                .setId(product.getId())
+                .setName(product.getName())
+                .setPrice(product.getPrice())
+                .setQuantityInStock(product.getQuantityInStock())
+                .build()).toList();
+
+        ProductResponseList response = ProductResponseList.newBuilder()
+                .addAllProducts(productResponseList)
+                .build();
+
+        responseObserver.onNext(response);
+        responseObserver.onCompleted();
     }
 }

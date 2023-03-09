@@ -43,7 +43,7 @@ class ProductResourceIntegrationTest {
         ProductRequest productRequest = ProductRequest.newBuilder()
                 .setName("product name")
                 .setPrice(10.0)
-                .setQuantity(10)
+                .setQuantityInStock(10)
                 .build();
 
         ProductResponse productResponse = serviceBlockingStub.create(productRequest);
@@ -61,7 +61,7 @@ class ProductResourceIntegrationTest {
         ProductRequest productRequest = ProductRequest.newBuilder()
                 .setName("Product A")
                 .setPrice(10.0)
-                .setQuantity(10)
+                .setQuantityInStock(10)
                 .build();
 
         Assertions.assertThatExceptionOfType(StatusRuntimeException.class)
@@ -95,6 +95,35 @@ class ProductResourceIntegrationTest {
 
         Assertions.assertThatExceptionOfType(StatusRuntimeException.class)
                 .isThrownBy(() -> serviceBlockingStub.findById(requestById))
+                .withMessageContaining("NOT_FOUND: Produto com ID " + id + " não encontrado");
+    }
+
+    @Test
+    @DisplayName("when delete is called with valid id, should does not throw exception")
+    public void deleteSuccessTest() {
+
+        long id = 1L;
+
+        RequestById requestById = RequestById.newBuilder()
+                .setId(id)
+                .build();
+
+        Assertions.assertThatNoException()
+                .isThrownBy(() -> serviceBlockingStub.delete(requestById));
+    }
+
+    @Test
+    @DisplayName("when delete is called with invalid id, then throw ProductNotFoundException")
+    public void deleteExceptionTest() {
+
+        long id = 999L;
+
+        RequestById requestById = RequestById.newBuilder()
+                .setId(id)
+                .build();
+
+        Assertions.assertThatExceptionOfType(StatusRuntimeException.class)
+                .isThrownBy(() -> serviceBlockingStub.delete(requestById))
                 .withMessageContaining("NOT_FOUND: Produto com ID " + id + " não encontrado");
     }
 
